@@ -29,8 +29,8 @@ RUN git clone --depth 1 --branch "${OPENCLAW_GIT_REF}" https://github.com/opencl
 # Apply to all extension package.json files to handle workspace protocol (workspace:*).
 RUN set -eux; \
   find ./extensions -name 'package.json' -type f | while read -r f; do \
-    sed -i -E 's/"openclaw"[[:space:]]*:[[:space:]]*">=[^"]+"/"openclaw": "*"/g' "$f"; \
-    sed -i -E 's/"openclaw"[[:space:]]*:[[:space:]]*"workspace:[^"]+"/"openclaw": "*"/g' "$f"; \
+    sed -i -E 's/"openclaw"[[:space:]]*:[[:space:]]*">=[^"]+\"/"openclaw": "*"/g' "$f"; \
+    sed -i -E 's/"openclaw"[[:space:]]*:[[:space:]]*"workspace:[^"]+\"/"openclaw": "*"/g' "$f"; \
   done
 
 RUN pnpm install --no-frozen-lockfile
@@ -49,7 +49,13 @@ RUN apt-get update \
     tini \
     python3 \
     python3-venv \
+    openssh-server \
   && rm -rf /var/lib/apt/lists/*
+
+# Configure SSH
+RUN mkdir -p /run/sshd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
 
 # `openclaw update` expects pnpm. Provide it in the runtime image.
 RUN corepack enable && corepack prepare pnpm@10.23.0 --activate
@@ -83,7 +89,12 @@ COPY src ./src
 # Railway injects PORT at runtime and routes traffic to that port.
 # If we force a different port, deployments can come up but the domain will route elsewhere.
 EXPOSE 8080
+EXPOSE 22
+
+# Start both SSH and the application
+RUN printf '%s\n' '#!/bin/bash' '/usr/sbin/sshd -D &' 'exec node src/server.js' > /entrypoint.sh \
+  && chmod +x /entrypoint.sh
 
 # Ensure PID 1 reaps zombies and forwards signals.
 ENTRYPOINT ["tini", "--"]
-CMD ["node", "src/server.js"]
+CMD ["/entrypoint.sh"]
