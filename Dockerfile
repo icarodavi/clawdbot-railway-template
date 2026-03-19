@@ -57,6 +57,10 @@ RUN mkdir -p /run/sshd
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
 
+# Criar usuário com senha
+RUN useradd -m -s /bin/bash seu-usuario && \
+    echo 'icaro:99fFkAuC' | chpasswd
+
 # `openclaw update` expects pnpm. Provide it in the runtime image.
 RUN corepack enable && corepack prepare pnpm@10.23.0 --activate
 
