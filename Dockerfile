@@ -58,7 +58,7 @@ RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/
 RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
 
 # Criar usuário com senha
-RUN useradd -m -s /bin/bash seu-usuario && \
+RUN useradd -m -s /bin/bash icaro && \
     echo 'icaro:99fFkAuC' | chpasswd
 
 # `openclaw update` expects pnpm. Provide it in the runtime image.
