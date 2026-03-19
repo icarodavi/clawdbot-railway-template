@@ -96,7 +96,7 @@ EXPOSE 8080
 EXPOSE 22
 
 # Start both SSH and the application
-RUN printf '%s\n' '#!/bin/bash' '/usr/sbin/sshd -D &' 'exec node src/server.js' > /entrypoint.sh \
+RUN printf '%s\n' '#!/bin/bash' 'set -e' '/usr/sbin/sshd -D &' 'SSH_PID=$!' 'exec node src/server.js' > /entrypoint.sh \
   && chmod +x /entrypoint.sh
 
 # Ensure PID 1 reaps zombies and forwards signals.
